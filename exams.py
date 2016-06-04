@@ -74,7 +74,7 @@ def update_token(user):
 def load_user(id):
     return User.query.get(int(id))
 
-@app.route('/payload')
+@app.route('/payload', methods=('GET','POST'))
 def payload():
     '''
     Endpoint for Github webhook. Used for deployments
