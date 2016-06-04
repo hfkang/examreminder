@@ -74,6 +74,16 @@ def update_token(user):
 def load_user(id):
     return User.query.get(int(id))
 
+@app.route('/payload')
+def payload():
+    '''
+    Endpoint for Github webhook. Used for deployments
+    :return:
+    '''
+    content = request.get_json(silent=True)
+    print content
+    return "ok",200
+
 @app.route('/')
 def new_user():
     if not current_user.is_anonymous:

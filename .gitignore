@@ -1,0 +1,10 @@
+config.py
+.DS_Store
+*.sqlite
+*.pyc
+*.bak
+*.hg
+*.hgignore
+*.json
+.idea/*
+bower_components/*
