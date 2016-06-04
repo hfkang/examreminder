@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% set page = "home" %}
+
+{% block main %}
+
+        <h2>Sup, {{ current_user.name }}?</h2>
+
+                <div id="course-code">
+                <form method="POST" action="{{ url_for('enroll') }}" class ="form-group">
+
+               <table class="table table-hover">
+               {%  if exams %}
+                {% for exam in exams | sort(attribute='course.date') %}
+                    <tr data-toggle="collapse" data-target="#hide{{ loop.index }}" class="accordion-toggle" style="cursor: pointer;">
+                        <td>{{ exam.course.name }}</td>
+                        <td>{{ exam.course.date }}</td>
+                        <td>{{ exam.course.time }}</td>
+                        <td class="text-right"> <a role="close" class="btn btn-xs" data-toggle="tooltip" title ="Remove" href="{{ url_for('unenroll',course_code = exam.course.name)}}">&times;</a></td>
+                    </tr>
+                    <tr ><td colspan="4" class="hiddenRow"><div class="accordian-body collapse row" id="hide{{ loop.index }}">
+                    <div class="col-md-12">
+                        <table class="table table-condensed room-table">
+                            <tr><th></th><th >Section</th><th >Location</th></tr>
+                            {%  for room in exam.course.room_assignments %}
+                            <tr>
+                                <td></td>
+                                <td>{% if room[0] %}{{ room[0] }}{% else %}All{% endif %}</td>
+                                <td> <button class="btn btn-xs btn-info" type="button" data-toggle="modal" data-target="#roomModal{{ exam.course.name }}{{ loop.index }}">{{ room[1] }}</button></td>
+                            </tr>
+
+                            {{ roomModal(room[1],room[2][1],room[2][2],exam.course.name,loop.index) }}
+                            {% endfor %}
+                        </table>
+                    </div>
+                    </div></td></tr>
+
+                {% endfor %}
+               {% endif %}
+
+
+
+               <tr>{{ form.hidden_tag() }}
+                   <td colspan = "4">
+                       <div class="row">
+                           <div class="col-sm-3 vcenter" id="scroll-tt-menu"> {{ form.course(size=8, class_="typeahead form-control", placeholder="Course") }} </div>
+                           <div class="col-sm-2 vcenter"> <button type="submit" class="btn btn-default vcenter">Submit</button> </div>
+                       </div>
+                   </td>
+               </tr>
+               </table></form></div>
+
+
+
+
+            <div class="row" id="delete">
+            <div class="col-sm-12">
+                <h4>Delete Your Account</h4>
+                Enter your phone number to delete your account and all associated data.
+                <form method="POST" autocomplete="off" action={{ url_for('delete') }} >
+                    {{ delform.hidden_tag() }}
+                    <div class="col-sm-2">{{ delform.phone(size=10, class_="form-control col-sm-2", placeholder="Phone",type="tel",pattern="[0-9]*",inputmode="numeric") }}</div>
+                    <div class="col-sm-1"><button type="submit" class="btn btn-default">Submit</button></div>
+            </form></div></div>
+
+<input type="text" data-provide="typeahead" id="bstypeahead">
+
+{% endblock %}
+
+{% macro roomModal(room,description,address,course,id) %}
+<div class="modal fade" id="roomModal{{ course }}{{ id }}" tabindex="-1" role="dialog" aria-labelledby="roomInfo">
+<div class="modal-dialog modal-sm">
+<div class="modal-content">
+    <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">{{ room }}</h4>
+    </div>
+    <div class="modal-body">
+        <p>Hello! According to U of T, the room can be found here: {{ description }}</p>
+        <p>You can find the building with <a href="https://maps.google.com/?q={{ address }}">Google Maps</a></p>
+    </div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <a role="button" class="btn btn-success" href="https://maps.google.com/?q={{ address }}">Gmaps</a>
+</div>
+</div>
+</div>
+</div>
+
+
+
+{%- endmacro %}
+
+{% block mainscript %}
+<script>
+
+</script>
+
+{% endblock %}

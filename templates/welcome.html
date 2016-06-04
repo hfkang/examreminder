@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block jumbotron %}
+
+<div class = "jumbotron"
+    <h2>You pass your exam! And you pass your exam!</h2>
+    <p>We all pass our exams!!!</p>
+</div>
+
+{% endblock %}
+
+{% block main %}
+<h1> Sign in with Google</h1>
+
+
+<a href="{{ url_for('login') }}"><img src="{{ url_for('static',filename='images/signin.png') }}" width="191" height="46"></a>
+
+
+
+
+{%  endblock %}

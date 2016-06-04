@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>I can pass engsci pls?</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="google-signin-client_id" content="166320683546-shvts9vmu6omq8j1csfn2pi745lv7sp3.apps.googleusercontent.com">
+</head>
+<body>
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Exam Reminder<sup>Alpha</sup></a>
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            {% if page == "home" %}
+            <ul class="nav navbar-nav">
+                <li>
+                    <a href="#">Home</a>
+                </li>
+                <li>
+                    <a href="#course-code">Register</a>
+                </li>
+                <li>
+                    <a href="#delete">Delete</a>
+                </li>
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<div class="container theme-showcase">
+
+{% block jumbotron %}
+{% endblock %}
+
+
+<div class="row">
+<div class="col-lg-12 text-justify">
+
+<div class="row ">
+    <div class="col-md-12">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for cat,message in messages %}
+                <div class="alert alert-{{ cat }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    </div>
+</div>
+
+{% block main %}
+{% endblock %}
+
+</div>
+</div>
+</div>
+{% block modals %}
+{% endblock %}
+<script src="{{ url_for('static',filename='js/jquery.js') }}"></script>
+<script src="{{ url_for('static',filename='js/bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static',filename='js/bootstrap3-typeahead.js') }}"></script>
+{% block mainscript %}
+{% endblock %}
+<link href="{{ url_for('static',filename='css/bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static',filename='css/bootstrap-theme.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static',filename='css/theme.css') }}" rel="stylesheet">
+
+</body>
+</html>

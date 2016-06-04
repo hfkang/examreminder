@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block main %}
+
+    <h2>Please enter your cellphone number</h2>
+    <p>Your phone number will be used to send you reminder text messages on the day of your exam!</p>
+    <p>I will never spam or solicit you because it costs me money to send text messages.</p>
+
+<form method="POST" class="form-inline" action={{ url_for('register') }}>
+    {{ form.hidden_tag() }}
+    <div class="form-group">{{ form.phone(size=10, class_="form-control col-sm-2", placeholder="Phone", type="tel",pattern="[0-9]*",inputmode="numeric") }}</div>
+    <div class="form-group"><button type="submit" class="btn btn-default">Submit</button></div>
+</form>
+
+{% endblock %}

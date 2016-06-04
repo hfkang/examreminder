@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block main %}
+
+    <h2>Please enter token</h2>
+    <p>A token was sent to your phone number: {{ current_user.phone }}</p>
+
+<form method="POST" class="form-inline" action={{ url_for('register') }}>
+    {{ form.hidden_tag() }}
+    <div class="form-group">{{ form.token(size=10, class_="form-control", placeholder="Token", type="number",pattern="[0-9]*",inputmode="numeric") }}</div>
+    <div class="form-group"><button type="submit" class="btn btn-default">Submit</button></div>
+</form>
+
+    <p>If necessary you can resend the token <a href="{{ url_for('resend_token') }}">here.</a></p>
+
+{% endblock %}

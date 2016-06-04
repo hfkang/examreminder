@@ -1,0 +1,11 @@
+#
+####### requirements.txt #######
+#
+###### Requirements without Version Specifiers ######
+beautifulsoup4
+flask
+flask-login
+flask-oauthlib
+flask-wtf
+json-delta
+flask-sqlalchemy
