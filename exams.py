@@ -82,13 +82,13 @@ def payload():
     Set repo_path and the wsgi_app entry point in app config
     :return:
     '''
-    exit = subprocess.call(['git','pull'], cwd=app.config['REPO_PATH'])
-    if exit != 0:
-        return "failed git pull", 500
-    exit = subprocess.call(['touch','gateway.py'],cwd=app.config['WSGI_PATH'])
-    if exit != 0:
+    exit = subprocess.run(['git','pull'], cwd=app.config['REPO_PATH'],stdout=subprocess.PIPE)
+    if exit.returncode != 0:
+        return exit.stdout, 500
+    exit = subprocess.run(['touch','exrem.wsgi'],cwd=app.config['REPO_PATH'])
+    if exit.returncode != 0:
         return "failed wsgi application update",500
-    return "ok",200
+    return "Update successful!",200
 
 @app.route('/')
 def new_user():
