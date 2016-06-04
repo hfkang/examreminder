@@ -62,7 +62,6 @@
                     <div class="col-sm-1"><button type="submit" class="btn btn-default">Submit</button></div>
             </form></div></div>
 
-<input type="text" data-provide="typeahead" id="bstypeahead">
 
 {% endblock %}
 
@@ -93,6 +92,23 @@
 {% block mainscript %}
 <script>
 
+    $(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip();
+});
+    var courses = new Bloodhound({
+        datumTokenizer: Bloodhound.tokenizers.whitespace,
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        prefetch: '{{ url_for('static',filename='exams_list.json') }}',
+    });
+    $('#course-code .typeahead').typeahead(
+            {
+                hint: true,
+                highlight: true,
+                minLength: 1
+            }, {
+                name: 'courses',
+                source: courses,
+                limit: 5,
+            });
 </script>
-
 {% endblock %}

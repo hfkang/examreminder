@@ -8,7 +8,8 @@ from db_classes import User, Course, Exam, db, delete_user
 import re
 import json
 import sys
-
+import subprocess
+import os
 
 app = Flask(__name__)
 app.config.from_object('config')     #set as envar in local windows environment.
@@ -62,7 +63,7 @@ def update_token(user):
 
     '''
     This is the part where you use the plivo api to send a token to the user's phoen number.
-    Actually we could always just send them emails but that would be pretty lame.
+    Actually we could always just send them emails but that would be pretty lame. LAME.
     '''
 
     user.token_date = now
@@ -74,14 +75,19 @@ def update_token(user):
 def load_user(id):
     return User.query.get(int(id))
 
-@app.route('/payload', methods=('GET','POST'))
+@app.route('/payload', methods=['POST'])
 def payload():
     '''
     Endpoint for Github webhook. Used for deployments
+    Set repo_path and the wsgi_app entry point in app config
     :return:
     '''
-    content = request.get_json(silent=True)
-    print content
+    exit = subprocess.call(['git','pull'], cwd=app.config['REPO_PATH'])
+    if exit != 0:
+        return "failed git pull", 500
+    exit = subprocess.call(['touch','gateway.py'],cwd=app.config['WSGI_PATH'])
+    if exit != 0:
+        return "failed wsgi application update",500
     return "ok",200
 
 @app.route('/')
