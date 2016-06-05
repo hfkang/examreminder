@@ -7,5 +7,4 @@ RUN chown -R whiskey /app
 RUN cd /app; git remote set-url origin https://github.com/hfkang/examreminder.git
 RUN cd /app; git config user.email "whiskey@examreminder.not"
 RUN cd /app; git config user.name "whiskey user"
-
 CMD [ "exrem.wsgi" ]
