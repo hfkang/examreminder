@@ -5,7 +5,6 @@ import random,datetime
 from forms import PhoneNumberForm,TokenForm,CourseForm
 from functools import wraps
 from db_classes import User, Course, Exam, db, delete_user
-import subprocess
 
 app = Flask(__name__)
 app.config.from_object('config')     #set as envar in local windows environment.

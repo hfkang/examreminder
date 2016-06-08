@@ -157,32 +157,6 @@ def test_dup():
         db.session.add(reminder)
         db.session.commit()
 
-def import_data():
-    '''
-DEPRECATED    Avoid using after the notification table has entires, as the course ordering /may/ shift! rip foreign keys
-    :return:
-    '''
-
-    drop_table(Course)
-
-    with open(SCHED_URL, 'r') as f:
-        sched = json.load(f)
-
-    for code in sched:
-        date,time,rooms = ingest_engsci(code, sched)
-        exam = Course(code, date=date, time=time, location=rooms,faculty='eng')
-        db.session.add(exam)
-
-
-    with open(ARTSCI_SCHED_URL, 'r') as f:
-        sched = json.load(f)
-
-    for course_code in sched:
-        date,time,rooms = ingest_artsci(course_code,sched)
-        exam = Course(course_code, date=date, time=time, location=rooms,faculty='artsci')
-        db.session.add(exam)
-
-    db.session.commit()
 
 def get_building(room_code):
     building_path = '/app/data/buildings.json'
