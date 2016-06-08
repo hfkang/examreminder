@@ -9,3 +9,4 @@ config.py
 .idea/*
 bower_components/*
 roomplz/*
+*/exams_list.json

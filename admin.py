@@ -1,7 +1,7 @@
-from flask import Flask, redirect, url_for, session, request, jsonify,render_template,flash, abort
+from flask import Flask, redirect, url_for, session, request,render_template,flash, abort
 from flask_login import UserMixin
 from flask_oauthlib.client import OAuth, OAuthException
-from flask_login import LoginManager, login_user ,current_user,login_required
+from flask_login import LoginManager, login_user ,current_user,login_required, logout_user
 import random,datetime
 from forms import TableManageForm
 from functools import wraps
@@ -12,6 +12,7 @@ from db_classes import update_schedule
 
 app = Flask(__name__)
 app.config.from_object('config')     #set as envar in local windows environment.
+app.config['APPLICATION_ROOT'] = '/admin'
 db.init_app(app)
 
 oauth = OAuth()
@@ -51,6 +52,7 @@ def load_user(id):
 def admin():
     return render_template('admin.html')
 
+
 @app.route('/payload', methods=['POST'])
 def payload():
     '''
@@ -66,7 +68,11 @@ def payload():
         return "failed wsgi application update",500
     return "Update successful!",200
 
-
+@app.route('/users')
+@login_required
+@admin_only
+def edit_user(  ):
+    return render_template('edit_user.html')
 
 @app.route('/tables')
 @login_required
@@ -116,6 +122,11 @@ def tables_manage():
 
     return render_template('admin_tables_manage.html', form=form, token="asdf1")
 
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return "You've been logged out :-)"
 
 @app.route('/login')
 def login():

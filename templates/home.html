@@ -27,8 +27,9 @@
                                 <td>{% if room[0] %}{{ room[0] }}{% else %}All{% endif %}</td>
                                 <td> <button class="btn btn-xs btn-info" type="button" data-toggle="modal" data-target="#roomModal{{ exam.course.name }}{{ loop.index }}">{{ room[1] }}</button></td>
                             </tr>
-
-                            {{ roomModal(room[1],room[2][1],room[2][2],exam.course.name,loop.index) }}
+                                {% if room[2] %}{% set desc = buildings[room[2]][0] %}{% set addr = buildings[room[2]][1] %}
+                                {% else %}{% set desc = "unknown" %}{% set addr = "unknown" %}{% endif %}
+                            {{ roomModal(room[1],desc,addr,exam.course.name,loop.index) }}
                             {% endfor %}
                         </table>
                     </div>

@@ -202,7 +202,6 @@ def update_schedule(useArtsci=True,useEngsci=True):
         else:
             course_obj = Course.make_unique(course,date,time,rooms,faculty,exam_type)
             db.session.add(course_obj)
-
     db.session.commit()
 
 def match_schedule(course,*args):
@@ -236,7 +235,7 @@ def reset_table(table):
 if __name__ == '__main__':
     from exams import app
     with app.test_request_context():
-        reset_table(Course)
+        #reset_table(Course)
         update_schedule()
         print(Course.query.all())
         #print(Exam.query.all())

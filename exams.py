@@ -1,10 +1,11 @@
 from flask import Flask, redirect, url_for, session,render_template,flash
 from flask_oauthlib.client import OAuth, OAuthException
 from flask_login import LoginManager, login_user,current_user,login_required
-import random,datetime
+import random,datetime,json
 from forms import PhoneNumberForm,TokenForm,CourseForm
 from functools import wraps
 from db_classes import User, Course, Exam, db, delete_user
+from download import buildings_file
 
 app = Flask(__name__)
 app.config.from_object('config')     #set as envar in local windows environment.
@@ -17,7 +18,6 @@ lm = LoginManager(app)
 lm.login_view = "new_user"
 
 DEFAULT_NOTIF = 'dayof'
-
 
 
 google = oauth.remote_app(
@@ -107,10 +107,12 @@ def authorized(resp):
 @login_required
 @verified_users
 def home():
-
+    buildings = {}
+    with open(buildings_file,'r') as f:
+        buildings = json.load(f)
     form = CourseForm()
     delform = PhoneNumberForm()
-    return render_template('home.html', exams=current_user.exams, form=form, delform=delform)
+    return render_template('home.html', exams=current_user.exams, form=form, delform=delform, buildings=buildings)
 
 @app.route('/enroll',methods=('GET','POST'))
 @login_required
@@ -126,6 +128,7 @@ def enroll():
 
     print(form.data['course'])
     course = Course.query.filter_by(name=form.data['course']).first()
+    print(course)
     notif = Exam.query.filter_by(course = course, user= current_user).first()
     if course and not notif:
         exam = Exam.make_unique(course,DEFAULT_NOTIF,current_user)

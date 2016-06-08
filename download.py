@@ -17,6 +17,7 @@ else:
     month = 'apr'
 year = str(datetime.datetime.now().year)[2:]
 
+
 ARTSCI_SCHEDULE = 'http://www.artsci.utoronto.ca/current/exams/%s%s' % (month,year)
 PLACES_URL = 'http://www.artsci.utoronto.ca/current/exams/places'
 
@@ -35,10 +36,11 @@ delta_file = repo_path + '/data/changes.json'
 packaged_buildings = repo_path + '/static/exams_list.json'
 
 def get_building(room,building_list):
-    regex = re.compile(room)
+    regex = re.compile(room.split()[0])
     for building in building_list:
-        if regex.match(building[0]):
-            return building[0]
+        if regex.match(building):
+            print(room,building)
+            return building
 
 def archive_data(current_file,prev_file,exam_dict):
     if path.isfile(current_file):
@@ -83,7 +85,7 @@ def scrape_engineering():
             cohort_info = cohort.findAll('td')
             cohort_name = cohort_info[1].text.strip()
             cohort_room = cohort_info[0].text.strip().replace('-',' ')
-            cohort_building = get_building(cohort_room.split()[0],building_list)
+            cohort_building = get_building(cohort_room,building_list)
             rooms.append([cohort_name,cohort_room,cohort_building])
 
         date = typeAndDate[1].strip()[6:]
