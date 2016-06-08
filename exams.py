@@ -1,15 +1,11 @@
-from flask import Flask, redirect, url_for, session, request, jsonify,render_template,flash
+from flask import Flask, redirect, url_for, session,render_template,flash
 from flask_oauthlib.client import OAuth, OAuthException
-from flask.ext.login import LoginManager, login_user, logout_user,current_user,login_required
+from flask_login import LoginManager, login_user,current_user,login_required
 import random,datetime
 from forms import PhoneNumberForm,TokenForm,CourseForm
 from functools import wraps
 from db_classes import User, Course, Exam, db, delete_user
-import re
-import json
-import sys
 import subprocess
-import os
 
 app = Flask(__name__)
 app.config.from_object('config')     #set as envar in local windows environment.
@@ -48,13 +44,6 @@ def verified_users(func):
     return verify
 
 
-def admin_only(func):
-    @wraps(func)
-    def verify(*args,**kwargs):
-        if not current_user.social_id == app.config['ADMIN_ID']:
-            return redirect(url_for('home'))
-        return func(*args,**kwargs)
-    return verify
 
 def update_token(user):
     token = random.randrange(10000, 99999)      #generate 5 digit number w/o leading 0
@@ -75,34 +64,12 @@ def update_token(user):
 def load_user(id):
     return User.query.get(int(id))
 
-@app.route('/payload', methods=['POST'])
-def payload():
-    '''
-    Endpoint for Github webhook. Used for deployments
-    Set repo_path and the wsgi_app entry point in app config
-    :return:
-    '''
-    exit = subprocess.run(['git','pull'], cwd=app.config['REPO_PATH'],stdout=subprocess.PIPE)
-    if exit.returncode != 0:
-        return exit.stdout, 500
-    exit = subprocess.run(['touch','exrem.wsgi'],cwd=app.config['REPO_PATH'])
-    if exit.returncode != 0:
-        return "failed wsgi application update",500
-    return "Update successful!",200
-
 @app.route('/')
 def new_user():
     if not current_user.is_anonymous:
         return redirect(url_for('home'))
     return render_template('welcome.html')
 
-@app.route('/admin')
-@login_required
-@verified_users
-@admin_only
-def admin():
-
-    return render_template('admin.html')
 
 @app.route('/login')
 def login():

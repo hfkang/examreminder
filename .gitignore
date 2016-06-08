@@ -8,3 +8,4 @@ config.py
 *.json
 .idea/*
 bower_components/*
+roomplz/*

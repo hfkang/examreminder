@@ -1,6 +1,6 @@
 from flask_wtf import Form
-from wtforms import StringField,IntegerField
-from wtforms.validators import DataRequired,Length, ValidationError, NumberRange
+from wtforms import StringField, IntegerField, BooleanField, SelectField, RadioField
+from wtforms.validators import DataRequired,Length, ValidationError, NumberRange, EqualTo
 class PhoneNumber(Form):
 
     default_area_codes = ('416','647','905')    #GTA codes. i think. probaly best to pull this from an api at some point and update later.
@@ -54,4 +54,11 @@ class CourseCode(Form):
 
 class CourseForm(Form):
     course = StringField('course', validators=[DataRequired(),CourseCode()])
-    course.label = "Enter Course Code: "
+
+class TableManageForm(Form):
+    table = SelectField('Table', choices=[('User', 'User'), ('Course', 'Course'), ('Exam', 'Exam')],validators=[DataRequired()])
+    action = RadioField('action', validators=[DataRequired()], choices=[('Update','Update'),('Scrape','Scrape'),('Reset','Reset')])
+    engineering = BooleanField('engineering')
+    artsci = BooleanField('artsci')
+    token = StringField('token',validators=[Length(min = 5,max = 5),EqualTo('supplied_token', message='Token must match')])
+    supplied_token = StringField('supplied_token',validators=[Length(min = 5,max = 5)])

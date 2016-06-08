@@ -1,14 +1,56 @@
 from bs4 import BeautifulSoup
 import requests, pickle, datetime,sys,json,json_delta
 from collections import defaultdict
-from os import rename
-from db_classes import Course, import_data, update_schedule
+from os import rename, path
+import re
 
 schedule_url = 'http://www.apsc.utoronto.ca/timetable/fes.aspx'
-ARTSCI_SCHEDULE = 'http://www.artsci.utoronto.ca/current/exams/apr16'
+
+month = datetime.datetime.now().month
+if month in range(5):
+    month = 'apr'
+elif month in range(5,7):
+    month = 'june'
+elif month in range(11,12):
+    month = 'dec'
+else:
+    month = 'apr'
+year = str(datetime.datetime.now().year)[2:]
+
+ARTSCI_SCHEDULE = 'http://www.artsci.utoronto.ca/current/exams/%s%s' % (month,year)
 PLACES_URL = 'http://www.artsci.utoronto.ca/current/exams/places'
 
-def scrape():
+repo_path = '/app'
+if sys.platform == 'darwin':
+    repo_path = '/Users/fkang/PycharmProjects/examreminder'
+
+current_artsci_sched = repo_path + '/data/artsci_sched.json'
+prev_artsci_sched = repo_path + '/data/prev_artsci_sched.json'
+current_eng_sched = repo_path + '/data/examsched.json'
+prev_eng_sched = repo_path + '/data/prevexamsched.json'
+
+buildings_file = repo_path + '/data/buildings.json'
+delta_file = repo_path + '/data/changes.json'
+
+packaged_buildings = repo_path + '/static/exams_list.json'
+
+def get_building(room,building_list):
+    regex = re.compile(room)
+    for building in building_list:
+        if regex.match(building[0]):
+            return building[0]
+
+def archive_data(current_file,prev_file,exam_dict):
+    if path.isfile(current_file):
+        rename(current_file,prev_file)
+    else:
+        #Create empty previous file so diff file has something to look at
+        with open(prev_file,'w') as f:
+            json.dump({}, f)
+    with open(current_file, 'w') as f:
+        json.dump(exam_dict,f)
+
+def scrape_engineering():
     '''
     Download the schedule from the apsc website and scrape it into something useful.
     The method is currently hard coded to handle the apsc website, but bs4 can be used for the artsci calendar too.
@@ -20,6 +62,10 @@ def scrape():
     courses = soup.findAll('div',attrs = {'id':'logo'})
 
     exam_directory = {}
+
+    with open(buildings_file,'r') as f:
+        building_list = json.load(f)
+
 
     for course in courses:
 
@@ -37,23 +83,36 @@ def scrape():
             cohort_info = cohort.findAll('td')
             cohort_name = cohort_info[1].text.strip()
             cohort_room = cohort_info[0].text.strip().replace('-',' ')
-            cohort_msg	= cohort_info[2].text.strip()
+            cohort_building = get_building(cohort_room.split()[0],building_list)
+            rooms.append([cohort_name,cohort_room,cohort_building])
 
-            rooms.append([cohort_name,cohort_room,cohort_msg])
+        date = typeAndDate[1].strip()[6:]
+        time = time.strip()[5:]
+        faculty = 'eng'
+        ex_type = typeAndDate[0].strip()
 
-        exam_directory[code.text.strip()] = {'name':name.strip(),
-                                             'type':typeAndDate[0].strip(),
-                                             'date':typeAndDate[1].strip()[6:],
-                                             'time':time.strip()[5:],
-                                             'rooms':rooms}
+        exam_directory[code.text.strip()] = [rooms,date,time,faculty,ex_type]
 
+    archive_data(current_eng_sched, prev_eng_sched, exam_directory)
 
-    #with open('examsched.pickle','wb') as f:
-    #pickle.dump(exam_directory, f)
-    rename('examsched.json','prevexamsched.json')
+def ingest_artsci(exam,exam_dict,buildings):
+    '''
+    Helper function to convert artsci dictionary format into desired format shared by engineering timetable
+    :param exam: course code to be scraped
+    :param exam_dict: source dictionary obtained from scraping
+    :param buildings: buildings.json dict passed in from parent function
+    :return: date,time,rooms (json'd)
+    '''
+    exam_data = exam_dict[exam][0]
+    time = exam_data[2][:7].replace("EV", "PM")
+    # Artsci calendar has format (DAY DD MON) Convert to engineering format (MON DD)
+    # It also stores the time like PM 2:00 , and seems to have start times of 9am, 2pm, and 7pm only
+    date_obj = datetime.datetime.strptime(exam_data[1] + time, '%a %d %b%p %I:%M')
+    date = date_obj.strftime('%b %d')
+    time = date_obj.strftime('%I:%M %p')
+    rooms = [[section[0], section[3],get_building(section[3],buildings)] for section in exam_dict[exam]]
 
-    with open('examsched.json','w') as f:
-        json.dump(exam_directory,f)
+    return date,time,rooms
 
 
 def scrape_artsci():
@@ -70,27 +129,35 @@ def scrape_artsci():
 
     courses = soup.find('table',attrs = {'class':'vertical listing'})       # Grab exam timetable
     # Remove nbsp artifacts from the html, and any trailing whitespace
-    exam_table = [[cell.text.replace('\u00a0','').strip()\
+    exam_table = [[cell.text.strip()\
                    for cell in row('td')] for row in courses('tr')[1:]]     # Convert html table into 2D array
     # Convert the timetable into dictionary where key: course code, and value: list of data [(section,date,time,location)]
-    exam_dict = defaultdict(list)
+    exam_dict = defaultdict(list)   #temporary dictionary to store data, have it processed by ingest_artsci
     for exam in exam_table:
         exam_dict[exam[0]].append(exam[1:])
 
+    faculty = 'artsci'
+    exam_type = 'na'
 
-    # Archive data as json files
-    rename('artsci_sched.json','prev_artsci_sched.json')
-    with open('artsci_sched.json', 'w') as f:
-        json.dump(exam_dict,f)
+    #Open file outside of main loop so we don't load the same thing over and over
+    with open(buildings_file,'r') as f:
+        buildings = json.load(f)
+
+    exam_dict_export = {}
+    for exam in exam_dict:
+        date, time, rooms = ingest_artsci(exam,exam_dict,buildings)
+        exam_dict_export[exam] = [rooms,date,time,faculty,exam_type]
+
+    archive_data(current_artsci_sched, prev_artsci_sched, exam_dict_export)
 
 
 def scrape_locations():
     '''
-    This method needs to be called very seldome and can be done manually.
-    It downloads the building shortcodes used by the university in examinations
-    :return:
+    This method is kept for archival purposes. It was used to download the buildings.json file, and was
+    manually edited so that addresses would resolve in google maps. It should no longer be used unless the university
+     adds new buildings.
+    :return: nothing. but it saves the schedule in the data directory
     '''
-
     raw_page = requests.get(PLACES_URL).text
     soup = BeautifulSoup(raw_page,'html.parser')
 
@@ -101,39 +168,47 @@ def scrape_locations():
     for row in building_table:
         row.append(row[1])
 
-    with open('buildings.json','w') as f:
+    with open(buildings_file,'w') as f:
         json.dump(building_table,f)
 
 def track_changes():
     '''Calculates the diff between the two schedules.
     This method is to be called on a regular (daily) basis, and will be used to notify users of any changes to their exams
+    This is also is used to update the database, as it informs the system of any courses that have changed, or new courses
+    In the event of a course being deleted from the schedule for some reason, the system will just send an update that
+    the course has changed something. Anything beyond that is beyond the scope of this application
     '''
-    with open('examsched.json','r') as f:
+    with open(current_eng_sched,'r') as f:
         current = json.load(f)
-    with open('prevexamsched.json','r') as f:
+    with open(prev_eng_sched,'r') as f:
         old = json.load(f)
-    with open('artsci_sched.json','r') as f:
+
+    with open(current_artsci_sched,'r') as f:
         current_artsci = json.load(f)
-    with open('prev_artsci_sched.json','r') as f:
+    with open(prev_artsci_sched,'r') as f:
         old_artsci = json.load(f)
 
     current.update(current_artsci)
     old.update(old_artsci)
 
-    tags = ('time','date','rooms')
-    schedule_changes = defaultdict(list)			#key: coursecode . List of tag changes made to each course
+    schedule_changes = []			    #List of courses to update
 
-    delta = json_delta.diff(old, current, minimal=True, verbose=True, key=None )
-    for diff in delta:
-        course_code = diff[0][0]		#Course code in diff structure
-        changed = diff[0][1]			#tag that changed in the exam schedul
-        schedule_changes[course_code].append(changed)
+    delta = json_delta.diff(old, current, verbose=True, key=None )
+    #print(delta)
+    if delta and len(delta[0]) > 1 and not delta[0][0]:
+        # [[[],<target>]] format generated by json_delta. prepare the cannons for mass updates!
+        schedule_changes = list(delta[0][1].keys())
+    else:
+        for course in delta:
+            schedule_changes.append(course[0][0])
 
-    for change in list(schedule_changes.items()):
-        schedule_changes[change[0]] = list(set(change[1]))		#remove duplicate entries of changed elements for each course
+    #print(schedule_changes)
 
-    with open('changes.json','w') as f:
+    schedule_changes= list(set(schedule_changes))		#remove duplicate entries of changed elements for each course
+    with open(delta_file,'w') as f:
         json.dump(schedule_changes,f)
+
+    package_json(current)              #generate minimized list of courses for consumption by frontend
 
 def package_json(exams):
     '''
@@ -142,24 +217,18 @@ def package_json(exams):
     :param exams:
     :return: none
     '''
-    min_dict = [course.name for course in exams]
+    min_dict = list(exams.keys())
 
-    with open('static/exams_list.json','w') as f:
+    with open(packaged_buildings,'w') as f:
         json.dump(min_dict,f)
 
 def scrape_all_and_save():
-
-    scrape()                #Download and scrape engineering schedule and place in examsched.json
+    scrape_engineering()                #Download and scrape engineering schedule and place in examsched.json
     scrape_artsci()         #Download and scrape artsci schedule and place in artsci_sched.json
+    track_changes()         #Get diff, and package json file while you're at it
 
-    from exams import app
-    with app.test_request_context():
-        import_data()
-        package_json(Course.query.all())                                #Export course names to json array for frontend
-        print(Course.query.filter_by(name='ACT470H1S').first())
-        print(Course.query.filter_by(name='MIE210H1').first())
-        track_changes()
-        update_schedule()
+
+
 
 if __name__ == "__main__":
     scrape_all_and_save()

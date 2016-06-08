@@ -1,16 +1,16 @@
-from flask.ext.login import UserMixin
+from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 import json
 import datetime
 import sys
 import re
+from download import repo_path
+from download import delta_file as changefile
 
-SCHED_URL = 'examsched.json'
-ARTSCI_SCHED_URL = 'artsci_sched.json'
+SCHED_URL = repo_path + '/data/examsched.json'
+ARTSCI_SCHED_URL = repo_path + '/data/artsci_sched.json'
 
 db = SQLAlchemy()
-
-
 
 class User(UserMixin,db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -58,6 +58,8 @@ class Course(db.Model):
     date = db.Column(db.Text)
     time = db.Column(db.Text)
     location = db.Column(db.Text)
+    faculty = db.Column(db.Text)        #('artsci' or 'eng')
+    type = db.Column(db.Text)           #(Engineering only: A,B,C,D,X)
 
 
     @property
@@ -68,20 +70,38 @@ class Course(db.Model):
         '''
         return json.loads(self.location)
 
-    def __init__(self,name,date="whenever",time="whenever",location = "wherever"):
+    @classmethod
+    def make_unique(cls,name,date,time,location,faculty,type):
+        '''
+        This method assumes that the U of T does not change course names willy nilly, especially during the year!
+        :param name: Course code
+        :param date: date of exam
+        :param time: time of exam
+        :param location: list of exam section and room assignments
+        :param faculty: faculty hosting the exam
+        :return: course instance
+        '''
+        check_notif = cls.query.filter_by(name=name).first()
+        if check_notif == None:
+            return cls(name,date,time,location,faculty,type)
+
+    def __init__(self,name,date,time,location,faculty,type):
         self.name = name
         self.date = date
         self.time = time
         self.location = location
+        self.faculty = faculty
+        self.type = type
 
     def __repr__(self):
         return '<Course %s>' % self.name
 
 
-    def update(self,date,time,location):
+    def update(self,date,time,location,type):
         self.date = date
         self.time = time
         self.location = location
+        self.type = type
 
 
 
@@ -139,8 +159,7 @@ def test_dup():
 
 def import_data():
     '''
-    Ingests the complete exam schedule as outputted by the download.py scripts
-    Avoid using after the notification table has entires, as the course ordering /may/ shift! rip foreign keys
+DEPRECATED    Avoid using after the notification table has entires, as the course ordering /may/ shift! rip foreign keys
     :return:
     '''
 
@@ -151,7 +170,7 @@ def import_data():
 
     for code in sched:
         date,time,rooms = ingest_engsci(code, sched)
-        exam = Course(code, date=date, time=time, location=rooms)
+        exam = Course(code, date=date, time=time, location=rooms,faculty='eng')
         db.session.add(exam)
 
 
@@ -160,13 +179,13 @@ def import_data():
 
     for course_code in sched:
         date,time,rooms = ingest_artsci(course_code,sched)
-        exam = Course(course_code, date=date, time=time, location=rooms)
+        exam = Course(course_code, date=date, time=time, location=rooms,faculty='artsci')
         db.session.add(exam)
 
     db.session.commit()
 
 def get_building(room_code):
-    building_path = '/home/francis/examreminder/data/buildings.json'
+    building_path = '/app/data/buildings.json'
     if sys.platform == 'darwin':
         building_path = '/Users/fkang/PycharmProjects/examreminder/data/buildings.json'
     with open(building_path, 'r') as f:
@@ -181,68 +200,51 @@ def get_building(room_code):
 
 
 
-
-def ingest_engsci(exam,exam_dict):
+def update_schedule(useArtsci=True,useEngsci=True):
     '''
-    This is just so that we can have symmetic methods between the artsci and engsci scheudles
-    :param exam:
-    :param exam_dict:
-    :return: date,time,rooms as pulled straight out of the json
+    Updates the database from the most recent data available
+    :return:
     '''
-    date = exam_dict[exam]['date']
-    time = exam_dict[exam]['time']
-    room_dict = exam_dict[exam]['rooms']
+    artsci = {}
+    engsci = {}
 
-    for room in room_dict:
-        room[2] = get_building(room[1])
+    if useArtsci:
+        with open(ARTSCI_SCHED_URL,'r') as f:
+            artsci = json.load(f)
+    if useEngsci:
+        with open(SCHED_URL,'r') as f:
+            engsci = json.load(f)                   #i can't help myself
 
-    rooms = json.dumps(room_dict)
+    artsci.update(engsci)
+    sched = artsci
 
-    return date,time,rooms
+    for course in sched:
+        rooms, date, time, faculty, exam_type = sched[course]
+        rooms = json.dumps(rooms)
 
-def ingest_artsci(exam,exam_dict):
-    exam_data = exam_dict[exam][0]
-    time = exam_data[2][:7].replace("EV", "PM")
-    # Artsci calendar has format (DAY DD MON) Convert to engineering format (MON DD)
-    # It also stores the time like PM 2:00 , and seems to have start times of 9am, 2pm, and 7pm only
-
-    date_obj = datetime.datetime.strptime(exam_data[1] + time, '%a %d %b%p %I:%M')
-    date = date_obj.strftime('%b %d')
-    time = date_obj.strftime('%I:%M %p')
-    rooms = json.dumps([[section[0], section[3],get_building(section[3])] for section in exam_dict[exam]])
-
-    return date,time,rooms
-
-def update_schedule():
-    with open('changes.json','r') as f:
-        delta = json.load(f)
-    with open(ARTSCI_SCHED_URL,'r') as f:
-        artsci = json.load(f)
-    with open(SCHED_URL,'r') as f:
-        engsci = json.load(f)                   #i cna't help myself
-
-    for course in delta:
-        sched = match_schedule(course,artsci,engsci)
         course_obj = Course.query.filter_by(name=course).first()
-        if sched == artsci:
-            print("In artsci land")
-            date,time,rooms = ingest_artsci(course,sched)
-            print(date,time,rooms)
-        elif sched == engsci:
-            print("In eng land ")
-            date,time,rooms = ingest_engsci(course,sched)
-            print(date,time,rooms)
-        course_obj.update(date, time, rooms)
+        if course_obj:
+            course_obj.update(date,time,rooms,exam_type)
+        else:
+            course_obj = Course.make_unique(course,date,time,rooms,faculty,exam_type)
+            db.session.add(course_obj)
 
     db.session.commit()
 
-
 def match_schedule(course,*args):
+    '''
+    DEPRECATED
+    This was used when update_courses pulled the list from the changes.json, and it needed to be determined which
+    dictionary to source our data from.
+    :param course:
+    :param args:
+    :return:
+    '''
     for sched in args:
         if course in sched:
             return sched
-
-
+    else:
+        return None     # Course not found. It has probably been deleted from the online registry
 
 def delete_user(user):
     Exam.query.filter_by(user = user).delete()
@@ -250,18 +252,18 @@ def delete_user(user):
     db.session.commit()
     return 0
 
-
-
-def drop_table(table):
-    from exams import app
-    with app.test_request_context():
+def reset_table(table):
+    try:
         table.__table__.drop(db.engine)
-        table.__table__.create(db.engine)
+    except:
+        pass
+    table.__table__.create(db.engine)
 
 if __name__ == '__main__':
-    #drop_table(Exam)
     from exams import app
     with app.test_request_context():
-        #update_schedule()
-        print(Exam.query.all())
-        print(User.query.filter_by(name='Francis Kang')[1].social_id)
+        reset_table(Course)
+        update_schedule()
+        print(Course.query.all())
+        #print(Exam.query.all())
+        #print(User.query.filter_by(name='Francis Kang')[1].social_id)
