@@ -4,13 +4,10 @@ import json
 import datetime
 import sys
 import re
-from download import repo_path
-from download import delta_file as changefile
-
-SCHED_URL = repo_path + '/data/examsched.json'
-ARTSCI_SCHED_URL = repo_path + '/data/artsci_sched.json'
+import config as c
 
 db = SQLAlchemy()
+
 
 class User(UserMixin,db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -22,11 +19,10 @@ class User(UserMixin,db.Model):
     token = db.Column(db.Text)
     token_date = db.Column(db.DateTime)
 
-
     @classmethod
     def make_unique(cls,name,email,social_id):
         check_id = cls.query.filter_by(social_id = social_id).first()
-        if check_id == None:
+        if check_id:
             return cls(name,email,social_id)
 
     def __init__(self,name,email,social_id):
@@ -60,7 +56,6 @@ class Course(db.Model):
     location = db.Column(db.Text)
     faculty = db.Column(db.Text)        #('artsci' or 'eng')
     type = db.Column(db.Text)           #(Engineering only: A,B,C,D,X)
-
 
     @property
     def room_assignments(self):
@@ -104,7 +99,6 @@ class Course(db.Model):
         self.type = type
 
 
-
 class Exam(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     course_id = db.Column(db.Integer,db.ForeignKey('course.id'))
@@ -142,21 +136,6 @@ def make_users(db):
 
     db.session.commit()
 
-def test_dup():
-    dupfran  = User.make_unique('4164340089','Francis Kang',b'lmao')
-    dupnum = User.make_unique('4164340089','Francissdf Kang',b'lmao')
-    unique = User.make_unique('416xxx0000','Unique Snowflake',b'lmaobutts')
-    print(dupfran)
-    print(dupnum)
-    print(unique)
-
-    aer = Course.query.filter_by(name = 'AER201').first()
-    reminder = Exam.make_unique(aer, 'dayof', User.query.first())
-    print(reminder)
-    if reminder != None:
-        db.session.add(reminder)
-        db.session.commit()
-
 
 def get_building(room_code):
     building_path = '/app/data/buildings.json'
@@ -183,10 +162,10 @@ def update_schedule(useArtsci=True,useEngsci=True):
     engsci = {}
 
     if useArtsci:
-        with open(ARTSCI_SCHED_URL,'r') as f:
+        with open(c.current_artsci_sched,'r') as f:
             artsci = json.load(f)
     if useEngsci:
-        with open(SCHED_URL,'r') as f:
+        with open(c.current_eng_sched,'r') as f:
             engsci = json.load(f)                   #i can't help myself
 
     artsci.update(engsci)

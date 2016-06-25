@@ -2,16 +2,15 @@ from flask import Flask, redirect, url_for, session, request,render_template,fla
 from flask_login import UserMixin
 from flask_oauthlib.client import OAuth, OAuthException
 from flask_login import LoginManager, login_user ,current_user,login_required, logout_user
-import random,datetime
 from forms import TableManageForm
 from functools import wraps
 import subprocess
-from db_classes import Course, Exam, User, db, reset_table
-from download import scrape_artsci, scrape_engineering, ARTSCI_SCHEDULE
-from db_classes import update_schedule
+from db_classes import Course, Exam, User, db, reset_table, update_schedule
+from download import scrape_artsci, scrape_engineering
 
 app = Flask(__name__)
 app.config.from_object('config')     #set as envar in local windows environment.
+# This doesn't seem to be specified by the werkzeug dispatcher middleware, and is necessary to prevent cookie clash
 app.config['APPLICATION_ROOT'] = '/admin'
 db.init_app(app)
 
@@ -110,7 +109,7 @@ def tables_manage():
                     flash('We are going to scrape the Engineering calendar', 'info')
                     scrape_engineering()
                 if artsci:
-                    flash('Scraped the artsci cal from: %s' % ARTSCI_SCHEDULE, 'info')
+                    flash('Scraped the artsci cal from: %s' % app.config['artsci_url'], 'info')
                     scrape_artsci()
             elif action == 'Update':
                 flash('Going to update from eng: %s and artsci: %s'%(eng,artsci), 'info')
