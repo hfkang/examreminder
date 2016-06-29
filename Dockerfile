@@ -5,6 +5,6 @@ RUN chown -R whiskey /app && \
     cd /app; git remote set-url origin https://github.com/hfkang/examreminder.git && \
     cd /app; git config user.email "whiskey@examreminder.not" && \
     cd /app; git config user.name "whiskey user" && \
-    apt-get update; apt-get install cron && \
+    apt-get update; apt-get install -y cron && \
     crontab -l | { cat; echo "0 2 * * 1 /app/roomplz/update.sh"; } | crontab -
 CMD [ "exrem.wsgi" ]
