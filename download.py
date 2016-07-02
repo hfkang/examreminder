@@ -7,12 +7,15 @@ import config as c
 
 
 def get_semester(datetime):
+    # I overwrite variables with another type because I'm rebelling against python's absurd type system
     month = datetime.month
     if month in range(5):
         month = 'apr'
-    elif month in range(5, 7):
+    elif month in range(5, 8):
         month = 'june'
-    elif month in range(11, 12):
+    elif month in range(8, 11):
+        month = 'aug'
+    elif month in range(11, 13):
         month = 'dec'
     else:
         month = 'apr'
@@ -35,6 +38,7 @@ def archive_data(current_file,prev_file,exam_dict):
         # Create empty previous file so json_delta has something to look at and can generate properly formed diff stanza
         with open(prev_file,'w') as f:
             json.dump({}, f)
+
     with open(current_file, 'w') as f:
         json.dump(exam_dict,f)
 
