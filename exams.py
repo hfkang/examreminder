@@ -5,7 +5,6 @@ import random,datetime,json
 from forms import PhoneNumberForm,TokenForm,CourseForm
 from functools import wraps
 from db_classes import User, Course, Exam, db, delete_user
-from download import buildings_file
 
 app = Flask(__name__)
 app.config.from_object('config')     #set as envar in local windows environment.
@@ -108,6 +107,7 @@ def authorized(resp):
 @verified_users
 def home():
     buildings = {}
+    buildings_file = app.config['buildings_file']
     with open(buildings_file,'r') as f:
         buildings = json.load(f)
     form = CourseForm()
@@ -243,9 +243,6 @@ def resend_token():
 @google.tokengetter
 def get_google_oauth_token():
     return session.get('google_token')
-
-
-
 
 
 if __name__ == '__main__':
