@@ -10,3 +10,4 @@ flask-wtf
 json-delta
 flask-sqlalchemy
 nose
+gunicorn
