@@ -5,8 +5,10 @@ config.py
 *.bak
 *.hg
 *.hgignore
+*.log
 *.json
 .idea/*
 bower_components/*
 roomplz/*
 */exams_list.json
+Caddyfile
