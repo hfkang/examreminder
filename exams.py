@@ -7,7 +7,7 @@ from functools import wraps
 from db_classes import User, Course, Exam, db, delete_user
 
 app = Flask(__name__)
-app.config.from_object('config')     #set as envar in local windows environment.
+app.config.from_pyfile('config.py')     #set as envar in local windows environment.
 db.init_app(app)
 
 oauth = OAuth()

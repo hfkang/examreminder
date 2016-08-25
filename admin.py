@@ -9,7 +9,7 @@ from db_classes import Course, Exam, User, db, reset_table, update_schedule
 from download import scrape_artsci, scrape_engineering
 
 app = Flask(__name__)
-app.config.from_object('config')     #set as envar in local windows environment.
+app.config.from_pyfile('config.py')     #set as envar in local windows environment.
 # This doesn't seem to be specified by the werkzeug dispatcher middleware, and is necessary to prevent cookie clash
 app.config['APPLICATION_ROOT'] = '/admin'
 db.init_app(app)
@@ -32,6 +32,8 @@ google = oauth.remote_app(
     access_token_url='https://accounts.google.com/o/oauth2/token',
     authorize_url='https://accounts.google.com/o/oauth2/auth',
 )
+
+
 
 def admin_only(func):
     @wraps(func)
@@ -67,11 +69,34 @@ def payload():
         return "failed wsgi application update",500
     return "Update successful!",200
 
+
 @app.route('/users')
 @login_required
 @admin_only
-def edit_user(  ):
+def edit_user():
     return render_template('edit_user.html')
+
+@app.route('/roomplz')
+@admin_only
+def roomplz():
+    return render_template('admin_roomplz.html')
+
+@app.route('/osm')
+@admin_only
+def osm():
+    exit = subprocess.run(['python','osm.py','--all'], cwd="roomplz",stdout=subprocess.PIPE)
+    if exit.returncode != 0:
+        return exit.stdout, 500
+
+    return exit.stdout
+
+@app.route('/logs')
+@login_required
+@admin_only
+def logs():
+    errorlogs = open('logs/error.log').read()
+    accesslogs = open('logs/access.log').read()
+    return render_template('admin_logs.html',elogs=errorlogs,alogs=accesslogs)
 
 @app.route('/tables')
 @login_required
@@ -133,8 +158,16 @@ def login():
     return google.authorize(callback=callback)
 
 @app.route('/login/authorized')
-@google.authorized_handler
-def authorized(resp):
+def authorized():
+    resp = google.authorized_response()
+
+    if resp is None:
+        return 'Access denied: reason=%s error=%s' % (
+            request.args['error_reason'],
+            request.args['error_description']
+        )
+
+
     if resp is None:
         abort(401)
 
