@@ -64,7 +64,7 @@ def payload():
     exit = subprocess.run(['git','pull'], cwd=app.config['REPO_PATH'],stdout=subprocess.PIPE)
     if exit.returncode != 0:
         return exit.stdout, 500
-    exit = subprocess.run(['touch','exrem.wsgi'],cwd=app.config['REPO_PATH'])
+    exit = subprocess.run(['touch','wsgi_app.py'],cwd=app.config['REPO_PATH'])
     if exit.returncode != 0:
         return "failed wsgi application update",500
     return "Update successful!",200
