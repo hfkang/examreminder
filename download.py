@@ -48,13 +48,13 @@ def scrape_engineering():
     Download the schedule from the apsc website and scrape it into something useful.
     The method is currently hard coded to handle the apsc website, but bs4 can be used for the artsci calendar too.
     '''
-    raw_page = requests.get(c.eng_url).text
+    raw_page = requests.get(c.ENG_URL).text
     soup = BeautifulSoup(raw_page,'html.parser')
     courses = soup.findAll('div',attrs = {'id':'logo'})
 
     exam_directory = {}
 
-    with open(c.buildings_file,'r') as f:
+    with open(c.BUILDINGS_JSON,'r') as f:
         building_list = json.load(f)
 
     for course in courses:
@@ -83,7 +83,7 @@ def scrape_engineering():
 
         exam_directory[code.text.strip()] = [rooms,date,time,faculty,ex_type]
 
-    archive_data(c.current_eng_sched, c.prev_eng_sched, exam_directory)
+    archive_data(c.CURR_ENG_SCHED, c.PREV_ENG_SCHED, exam_directory)
 
 def ingest_artsci(exam,exam_dict,buildings):
     '''
@@ -115,7 +115,7 @@ def scrape_artsci():
     '''
 
     month,year = get_semester(datetime.datetime.now())
-    url =c.artsci_url + month + year
+    url =c.ARTSCI_URL + month + year
 
     raw_page = requests.get(url).text
     soup = BeautifulSoup(raw_page,'html.parser')
@@ -133,7 +133,7 @@ def scrape_artsci():
     exam_type = 'na'
 
     #Open file outside of main loop so we don't load the same thing over and over
-    with open(c.buildings_file,'r') as f:
+    with open(c.BUILDINGS_JSON,'r') as f:
         buildings = json.load(f)
 
     exam_dict_export = {}
@@ -141,7 +141,7 @@ def scrape_artsci():
         date, time, rooms = ingest_artsci(exam,exam_dict,buildings)
         exam_dict_export[exam] = [rooms,date,time,faculty,exam_type]
 
-    archive_data(c.current_artsci_sched, c.prev_artsci_sched, exam_dict_export)
+    archive_data(c.CURR_ARTSCI_SCHED, c.PREV_ARTSCI_SCHED, exam_dict_export)
 
 
 def scrape_locations():
@@ -151,7 +151,7 @@ def scrape_locations():
      adds new buildings.
     :return: nothing. but it saves the schedule in the data directory
     '''
-    raw_page = requests.get(c.buildings_url).text
+    raw_page = requests.get(c.BUILDING_URL).text
     soup = BeautifulSoup(raw_page,'html.parser')
 
     buildings = soup.find('table',attrs = {'class':'vertical listing'})      # Grab exam timetable
@@ -161,7 +161,7 @@ def scrape_locations():
     for row in building_table:
         row.append(row[1])
 
-    with open(c.buildings_file,'w') as f:
+    with open(c.BUILDINGS_JSON,'w') as f:
         json.dump(building_table,f)
 
 def track_changes():
@@ -171,14 +171,14 @@ def track_changes():
     In the event of a course being deleted from the schedule for some reason, the system will just send an update that
     the course has changed something. Anything beyond that is beyond the scope of this application
     '''
-    with open(c.current_eng_sched,'r') as f:
+    with open(c.CURR_ENG_SCHED,'r') as f:
         current = json.load(f)
-    with open(c.prev_eng_sched,'r') as f:
+    with open(c.PREV_ENG_SCHED,'r') as f:
         old = json.load(f)
 
-    with open(c.current_artsci_sched,'r') as f:
+    with open(c.CURR_ARTSCI_SCHED,'r') as f:
         current_artsci = json.load(f)
-    with open(c.prev_artsci_sched,'r') as f:
+    with open(c.PREV_ARTSCI_SCHED,'r') as f:
         old_artsci = json.load(f)
 
     current.update(current_artsci)
@@ -198,7 +198,7 @@ def track_changes():
     #print(schedule_changes)
 
     schedule_changes= list(set(schedule_changes))		#remove duplicate entries of changed elements for each course
-    with open(c.delta_file,'w') as f:
+    with open(c.DELTA,'w') as f:
         json.dump(schedule_changes,f)
 
     package_json(current)              #generate minimized list of courses for consumption by frontend
@@ -212,7 +212,7 @@ def package_json(exams):
     '''
     min_dict = list(exams.keys())
 
-    with open(c.packaged_courses,'w') as f:
+    with open(c.PKG_EXAMS,'w') as f:
         json.dump(min_dict,f)
 
 def scrape_all_and_save():

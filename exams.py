@@ -18,7 +18,6 @@ lm.login_view = "new_user"
 
 DEFAULT_NOTIF = 'dayof'
 
-
 google = oauth.remote_app(
     'google',
     app_key = 'GOOGLE',
@@ -107,7 +106,7 @@ def authorized(resp):
 @verified_users
 def home():
     buildings = {}
-    buildings_file = app.config['buildings_file']
+    buildings_file = app.config['BUILDINGS_JSON']
     with open(buildings_file,'r') as f:
         buildings = json.load(f)
     form = CourseForm()

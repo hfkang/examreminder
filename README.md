@@ -4,7 +4,9 @@ Dashboard and reminder service for U of T exams
 ### Data Sources
 
 ArtSci calendar: http://www.artsci.utoronto.ca/current/exams/june16 
+
 Engineering: http://www.apsc.utoronto.ca/timetable/fes.aspx
+
 Engineering Summer: http://www.undergrad.engineering.utoronto.ca/Assets/UndergradEng+Digital+Assets/2016+Summer+F+Session+Engineering+Exam+Schedule+2.pdf
 
 ### Deployment

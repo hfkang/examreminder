@@ -109,7 +109,7 @@ def tables_manage():
                     flash('We are going to scrape the Engineering calendar', 'info')
                     scrape_engineering()
                 if artsci:
-                    flash('Scraped the artsci cal from: %s' % app.config['artsci_url'], 'info')
+                    flash('Scraped the artsci cal from: %s' % app.config['ARTSCI_URL'], 'info')
                     scrape_artsci()
             elif action == 'Update':
                 flash('Going to update from eng: %s and artsci: %s'%(eng,artsci), 'info')
