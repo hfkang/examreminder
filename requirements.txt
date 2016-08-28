@@ -11,3 +11,4 @@ json-delta
 flask-sqlalchemy
 nose
 gunicorn
+json-logging-py
