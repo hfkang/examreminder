@@ -1,0 +1,3 @@
+0.0.0.0:8080
+log logs/caddyserver.log
+proxy / localhost:5000
