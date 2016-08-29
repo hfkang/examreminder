@@ -8,3 +8,5 @@ tar xzvf caddy.tar.gz -C /usr/local/bin/ caddy
 chmod +x /usr/local/bin/caddy
 
 pip install -r /app/requirements.txt
+
+mkdir -p /app/logs
