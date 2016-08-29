@@ -212,10 +212,8 @@ def reset_table(table):
     table.__table__.create(db.engine)
 
 if __name__ == '__main__':
-    from exams import app
-    with app.test_request_context():
-        #reset_table(Course)
-        update_schedule()
-        print(Course.query.all())
-        #print(Exam.query.all())
-        #print(User.query.filter_by(name='Francis Kang')[1].social_id)
+    if sys.argv[1] == '--startup':
+        print("Creating database tables from scratch....")
+        reset_table(User)
+        reset_table(Course)
+        reset_table(Exam)
