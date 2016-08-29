@@ -12,6 +12,7 @@ pip install -r /app/requirements.txt
 mkdir -p /app/logs
 
 echo "Init roomplz"
+cd /app/roomplz
 python osm.py --all
 echo "Downloaded osm data"
 echo "init db"
