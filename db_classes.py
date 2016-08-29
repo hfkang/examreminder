@@ -213,7 +213,9 @@ def reset_table(table):
 
 if __name__ == '__main__':
     if sys.argv[1] == '--startup':
-        print("Creating database tables from scratch....")
-        reset_table(User)
-        reset_table(Course)
-        reset_table(Exam)
+        from exams import app
+        with app.test_request_context():
+            print("Creating database tables from scratch....")
+            reset_table(User)
+            reset_table(Course)
+            reset_table(Exam)
