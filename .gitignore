@@ -11,4 +11,3 @@ config.py
 bower_components/*
 roomplz/*
 */exams_list.json
-Caddyfile
