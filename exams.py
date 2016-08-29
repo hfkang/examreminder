@@ -36,7 +36,7 @@ def verified_users(func):
     @wraps(func)
     def verify(*args,**kwargs):
         if not current_user.verified:
-            return redirect(url_for('register'))
+            return redirect(url_for('register',_external=True))
         return func(*args,**kwargs)
     return verify
 
@@ -64,7 +64,7 @@ def load_user(id):
 @app.route('/')
 def new_user():
     if not current_user.is_anonymous:
-        return redirect(url_for('home'))
+        return redirect(url_for('home',_external=True))
     return render_template('welcome.html')
 
 
@@ -77,7 +77,7 @@ def login():
 @google.authorized_handler
 def authorized(resp):
     if resp is None:
-        return redirect(url_for('new_user'))
+        return redirect(url_for('new_user',_external=True))
 
     if isinstance(resp, OAuthException):
         return 'Error: %s' % resp
@@ -90,7 +90,7 @@ def authorized(resp):
 
     if social_id is None:
         flash('Authentication failed.')
-        return redirect(url_for('new_user'))
+        return redirect(url_for('new_user',_external=True))
 
     user = User.query.filter_by(social_id=social_id).first()
     if not user:
@@ -99,7 +99,7 @@ def authorized(resp):
         db.session.commit()
 
     login_user(user, True)
-    return redirect(url_for('register'))        #home is for logged in users
+    return redirect(url_for('register',_external=True))        #home is for logged in users
 
 @app.route('/home', methods=('GET','POST'))
 @login_required
@@ -118,12 +118,12 @@ def home():
 @verified_users
 def enroll():
     if not current_user.verified:
-        return redirect(url_for('register'))
+        return redirect(url_for('register',_external=True))
 
     form = CourseForm()
     if not form.validate_on_submit():
         flash("Invalid Course name provided", "warning")
-        return redirect(url_for('home'))
+        return redirect(url_for('home',_external=True))
 
     print(form.data['course'])
     course = Course.query.filter_by(name=form.data['course']).first()
@@ -139,7 +139,7 @@ def enroll():
     elif notif and course:
         flash("You are already registered in %s" % course.name, "warning")
 
-    return redirect(url_for('home'))
+    return redirect(url_for('home',_external=True))
 
 @app.route('/unenroll/<course_code>',methods=('GET','POST'))
 @login_required
@@ -148,7 +148,7 @@ def unenroll(course_code):
 
     if len(course_code) > 9 or len(course_code) < 6:
         flash("Invalid course code", "warning")
-        return redirect(url_for('home'))
+        return redirect(url_for('home',_external=True))
 
     course = Course.query.filter_by(name=course_code).first()
     notif = Exam.query.filter_by(course = course, user= current_user)
@@ -161,7 +161,7 @@ def unenroll(course_code):
         db.session.commit()
         flash("You have been removed from the exam list.", "success")
 
-    return redirect(url_for('home'))
+    return redirect(url_for('home',_external=True))
 
 
 
@@ -176,10 +176,10 @@ def delete():
         if number == current_user.phone:
             delete_user(current_user)
             flash("Your account has been deleted." , "success")
-            return redirect(url_for('home'))
+            return redirect(url_for('home',_external=True))
 
     flash("This is not your phone number. Deletion aborted.", "danger")
-    return redirect(url_for('home'))
+    return redirect(url_for('home',_external=True))
 
 
 @app.route('/register',methods=('GET','POST'))
@@ -190,7 +190,7 @@ def register():
     :return: Forms to enter phone number, then token
     '''
     if current_user.verified:
-        return redirect(url_for('home'))
+        return redirect(url_for('home',_external=True))
 
     elif current_user.phone:
         token_form = TokenForm()
@@ -199,7 +199,7 @@ def register():
             if current_user.check_token(token):
                 current_user.verified = True
                 db.session.commit()
-                return redirect(url_for('register'))
+                return redirect(url_for('register',_external=True))
             else:
                 flash('Please check your token.', "info")
 
@@ -210,7 +210,7 @@ def register():
             phoneNum = form.data['phone']
             if User.query.filter_by(phone = phoneNum, verified = True).all():
                 flash("Number already in use.", "danger")
-                return redirect(url_for('register'))
+                return redirect(url_for('register',_external=True))
             current_user.phone = phoneNum
             update_token(current_user)                  #db committed in this method for us
             return current_user.token + " This is your token. Remember it or smth idc."
@@ -224,7 +224,7 @@ def resend_token():
     If the user has already verified their account, send them back to the homepage.
     '''
     if current_user.verified or not current_user.phone:
-        return redirect(url_for('home'))
+        return redirect(url_for('home',_external=True))
 
     delta = datetime.datetime.now() - current_user.token_date
     min_required = datetime.timedelta(minutes = 2)
@@ -236,7 +236,7 @@ def resend_token():
         flash('Please wait %s seconds before requesting a new token' % str((min_required-delta).seconds), "warning")
 
     flash('Your token is %s' % current_user.token)
-    return redirect(url_for('register'))
+    return redirect(url_for('register',_external=True))
 
 
 @google.tokengetter

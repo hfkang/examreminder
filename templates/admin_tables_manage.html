@@ -16,7 +16,7 @@
                 <div class="panel-body">
                     <div class="row">
                         <div class="col-lg-8">
-                            <form role="form" method="POST" action="{{ url_for('tables_manage') }}" >
+                            <form role="form" method="POST" action="{{ url_for('tables_manage',_external=True) }}" >
                                 {{ form.hidden_tag() }}
                                 <input type="hidden" name="token" value="{{ token }}">
                                 <div class="form-group">

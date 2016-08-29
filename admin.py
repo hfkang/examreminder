@@ -39,7 +39,7 @@ def admin_only(func):
     @wraps(func)
     def verify(*args,**kwargs):
         if not current_user.social_id == app.config['ADMIN_ID']:
-            return redirect(url_for('login'))
+            return redirect(url_for('login',_external=True))
         return func(*args,**kwargs)
     return verify
 
@@ -186,7 +186,7 @@ def authorized():
 
     if social_id == app.config['ADMIN_ID']:
         login_user(user, True)
-        return redirect(url_for('admin'))        #home is for logged in users
+        return redirect(url_for('admin',_external = True))        #home is for logged in users
 
     abort(401)
 
