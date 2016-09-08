@@ -95,7 +95,10 @@ def osm():
 @admin_only
 def logs():
     errorlogs = open('logs/error.log').read()
+    errorlogs.replace('\n','<br>')
     accesslogs = open('logs/access.log').read()
+    accesslogs.replace('\n','<br>')
+
     return render_template('admin_logs.html',elogs=errorlogs,alogs=accesslogs)
 
 @app.route('/tables')
