@@ -2,6 +2,10 @@
 
 apk update
 apk add curl
+apk add tzdata
+
+cp /usr/share/zoneinfo/Canada/Eastern /etc/localtime
+echo "America/Toronto" >  /etc/timezone
 
 curl "https://caddyserver.com/download/build?os=linux&arch=amd64&features=cloudflare" -o "caddy.tar.gz"
 tar xzvf caddy.tar.gz -C /usr/local/bin/ caddy
