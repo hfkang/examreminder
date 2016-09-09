@@ -3,6 +3,7 @@
 apk update
 apk add curl
 apk add tzdata
+apk add git
 
 cp /usr/share/zoneinfo/Canada/Eastern /etc/localtime
 echo "America/Toronto" >  /etc/timezone
