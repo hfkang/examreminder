@@ -47,6 +47,9 @@ class User(UserMixin,db.Model):
         print(type(token))
         return (self.token == token) and (delta < max_age)
 
+    def get_id(self):
+        return self.social_id
+
 
 class Course(db.Model):
     id = db.Column(db.Integer,primary_key = True)

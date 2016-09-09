@@ -59,7 +59,7 @@ def update_token(user):
 
 @lm.user_loader
 def load_user(id):
-    return User.query.get(int(id))
+    return User.query.filter_by(social_id=id).first()
 
 @app.route('/')
 def new_user():
