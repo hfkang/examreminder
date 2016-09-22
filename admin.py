@@ -64,6 +64,7 @@ def payload():
     exit = subprocess.run(['git','pull --recurse-submodules'], cwd=app.config['REPO_PATH'],stdout=subprocess.PIPE)
     if exit.returncode != 0:
         return exit.stdout, 500
+    # Actually update roomplz
     exit = subprocess.run(['git','submodule update --recursive'],cwd=app.config['REPO_PATH'],stdout=subprocess.PIPE)
     if exit.returncode != 0:
         return exit.stdout, 500
