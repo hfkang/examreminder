@@ -61,7 +61,10 @@ def payload():
     Set repo_path and the wsgi_app entry point in app config
     :return:
     '''
-    exit = subprocess.run(['git','pull'], cwd=app.config['REPO_PATH'],stdout=subprocess.PIPE)
+    exit = subprocess.run(['git','pull --recurse-submodules'], cwd=app.config['REPO_PATH'],stdout=subprocess.PIPE)
+    if exit.returncode != 0:
+        return exit.stdout, 500
+    exit = subprocess.run(['git','submodule update --recursive'],cwd=app.config['REPO_PATH'],stdout=subprocess.PIPE)
     if exit.returncode != 0:
         return exit.stdout, 500
     exit = subprocess.run(['touch','wsgi_app.py'],cwd=app.config['REPO_PATH'])
