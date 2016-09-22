@@ -23,3 +23,7 @@ echo "Downloaded osm data"
 echo "init db"
 cd /app
 python db_classes.py --startup
+
+# Update the data at 4am on mondays
+line="0 4 * * 1 python /app/roomplz/osm.py --all"
+(crontab -u root -l; echo "$line" ) | crontab -u root -
